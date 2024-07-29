@@ -9,6 +9,9 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+filter_train2017/
+train2017/
+original_train2017/
 develop-eggs/
 dist/
 downloads/

@@ -1,45 +1,8 @@
 import os
-import shutil
 
-
-# def process_file(input_file, output_file):
-#     """
-#     Processes a single file, filtering and replacing numbers as instructed.
-
-#     Args:
-#         input_file (str): Path to the input file to be processed.
-#         output_file (str): Path to the output file where the filtered data will be written.
-#     """
-
-#     allowed_numbers = {0, 1, 2, 3, 7, 14, 15, 16, 18}
-#     replacements = {3: 1, 4: 3, 7: 4, 14: 5, 15: 6, 16: 7, 18: 8}
-
-#     modified = False  # Flag to track if any changes were made
-
-#     with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
-#         for line in infile:
-#             first_number = int(line.split()[0])
-
-#             # Check if the first number needs processing (replacement or removal)
-#             if first_number in allowed_numbers:
-#                 if first_number in replacements:
-#                     # Replace the number
-#                     line = line.replace(str(first_number), str(replacements[first_number]), 1)
-#                     modified = True
-#                     print(f"Changed line in {input_file}")
-#                 else:
-#                     # Remove the line if it's not meant to be replaced
-#                     continue  # Skip writing this line to the output file
-#             else:
-#                 # Keep lines with numbers outside the allowed range
-#                 modified = True  # Flag change even if line isn't filtered (for clarity)
-
-#             outfile.write(line)
-
-#     # If no changes were made, copy the original file directly (efficiency)
-#     if not modified:
-#         shutil.copyfile(input_file, output_file)
-
+filtered_classes = ['person', 'two-wheeler', 'car', 'bus', 'truck', 'bird', 'cat', 'dog', 'sheep']
+allowed_numbers = {0, 1, 2, 3, 7, 14, 15, 16, 18}
+replacements = {3: 1, 4: 3, 7: 4, 14: 5, 15: 6, 16: 7, 18: 8}
 
 def process_file(input_file, output_file):
     """
@@ -49,9 +12,6 @@ def process_file(input_file, output_file):
         input_file (str): Path to the input file to be processed.
         output_file (str): Path to the output file where the filtered data will be written.
     """
-
-    allowed_numbers = {0, 1, 2, 3, 7, 14, 15, 16, 18}
-    replacements = {3: 1, 4: 3, 7: 4, 14: 5, 15: 6, 16: 7, 18: 8}
 
     filtered_lines = 0
     skipped_lines = 0
@@ -68,31 +28,22 @@ def process_file(input_file, output_file):
                         # Replace the number
                         line = line.replace(str(first_number), str(replacements[first_number]), 1)
                         replaced_lines += 1
-                        modified = True
-                        print(f"Replaced line in {input_file}")
-                    else:
-                        # Remove the line if it's not meant to be replaced
-                        continue  # Skip writing this line to the output file
+                        print(f"Replaced line in {input_file}: {line.strip()}")
+                    outfile.write(line)  # Write line if it's allowed (with or without replacement)
+                    filtered_lines += 1
                 else:
-                    # Keep lines with numbers outside the allowed range
-                    modified = True  # Flag change even if line isn't filtered (for clarity)
-
-                outfile.write(line)
-                filtered_lines += 1
+                    # Skip lines with numbers outside the allowed range
+                    skipped_lines += 1
+                    print(f"Skipped line in {input_file}: {line.strip()}")
             except (ValueError, IndexError):
                 # Handle potential errors during processing (e.g., non-numeric first element)
                 skipped_lines += 1
-                print(f"Error: Skipping line due to error in {input_file}")
-
-    # No need for a modified flag or efficiency check here
-    # All lines are processed, and only allowed lines are written
+                print(f"Error: Skipping line due to error in {input_file}: {line.strip()}")
 
     print(f"Processing complete for {input_file}:")
     print(f"- Filtered lines: {filtered_lines}")
     print(f"- Skipped lines: {skipped_lines}")
     print(f"- Replaced lines: {replaced_lines}\n")
-
-
 def check_invalid_numbers(output_folder):
     """
     Checks filtered files for invalid numbers (outside the range 0-8).
@@ -114,37 +65,59 @@ def check_invalid_numbers(output_folder):
                         raise ValueError(f"Invalid number {first_number} found in {output_file}")
             print(f"Successfully checked {filename} for invalid numbers.")  # New print statement
 
-
 def update_coco_yml(coco_yml_path):
     """
-    Modifies the COCO dataset configuration file (`coco.yml`) to reflect the filtered class information.
+    Modifies the COCO dataset configuration file (`coco.yaml`) to reflect the filtered class information.
 
     Args:
-        coco_yml_path (str): Path to the COCO dataset configuration file (coco.yml).
+        coco_yml_path (str): Path to the COCO dataset configuration file (coco.yaml).
 
-    Updates `nc:` and `names:` fields in `coco.yml` to match filtered classes.
+    Updates `nc:` and `names:` fields in `coco.yaml` to match filtered classes.
     """
 
+    absolute_coco_yml_path = os.path.abspath(coco_yml_path)
     print(f"coco_yml_path: {coco_yml_path}")
-    filtered_classes = ['person', 'two-wheeler', 'car', 'bus', 'truck', 'bird', 'cat', 'dog', 'sheep']
+    print(f"absolute_coco_yml_path: {absolute_coco_yml_path}")
+
+    print("Checking existence of file...")
+    if not os.path.exists(absolute_coco_yml_path):
+        print(f"Error: COCO dataset configuration file ({absolute_coco_yml_path}) not found.\n")
+        return
+
+    print("Checking readability of file...")
+    if not os.access(absolute_coco_yml_path, os.R_OK):
+        print(f"Error: COCO dataset configuration file ({absolute_coco_yml_path}) is not readable.\n")
+        return
+
+    print("File exists and is readable.")
 
     try:
-        with open(coco_yml_path, 'r') as infile, open(coco_yml_path + '.bak', 'w') as backup_file:
-            backup_file.write(infile.read())
+        # Create a backup of the original file
+        with open(absolute_coco_yml_path, 'r') as infile:
+            content = infile.read()
+            with open(absolute_coco_yml_path + '.bak', 'w') as backup_file:
+                backup_file.write(content)
 
-        with open(coco_yml_path, 'w') as outfile:
-            for line in infile:
+        # Read the original file content
+        with open(absolute_coco_yml_path, 'r') as infile:
+            lines = infile.readlines()
+
+        # Write the modified content to the original file
+        with open(absolute_coco_yml_path, 'w') as outfile:
+            for line in lines:
                 if line.startswith('nc:'):
                     outfile.write(f"nc: {len(filtered_classes)}\n")
                 elif line.startswith('names:'):
                     outfile.write(f"names: {filtered_classes}\n")
+                    break  # Stop writing after the names line
                 else:
                     outfile.write(line)
 
-        print(f"Successfully updated COCO dataset configuration ({coco_yml_path}) for {len(filtered_classes)} classes.\n")
+        print(f"Successfully updated COCO dataset configuration ({absolute_coco_yml_path}) for {len(filtered_classes)} classes.\n")
     except FileNotFoundError:
-        print(f"Error: COCO dataset configuration file ({coco_yml_path}) not found.\n")
-
+        print(f"Error: COCO dataset configuration file ({absolute_coco_yml_path}) not found.\n")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}\n")
 
 def main():
     """
@@ -170,7 +143,7 @@ def main():
     print(f"\nThe number of files scanned is: {count}\n")
 
     # Update COCO YML file with filtered class information
-    coco_yml_path = os.path.join('../..', 'coco.yml')
+    coco_yml_path = os.path.join('../..', 'coco.yaml')
     update_coco_yml(coco_yml_path)
 
     os.rename(input_folder, 'original_train2017')  # Rename input folder
@@ -178,6 +151,9 @@ def main():
     # Check for invalid numbers after filtering
     check_invalid_numbers(output_folder)
 
+    os.rename(output_folder, 'train2017')  # Rename input folder
+
+    print("script finished successfully")
 
 if __name__ == "__main__":
     main()
