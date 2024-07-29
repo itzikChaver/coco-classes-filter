@@ -44,6 +44,7 @@ def process_file(input_file, output_file):
     print(f"- Filtered lines: {filtered_lines}")
     print(f"- Skipped lines: {skipped_lines}")
     print(f"- Replaced lines: {replaced_lines}\n")
+
 def check_invalid_numbers(output_folder):
     """
     Checks filtered files for invalid numbers (outside the range 0-8).
@@ -64,6 +65,7 @@ def check_invalid_numbers(output_folder):
                     if first_number < 0 or first_number > 8:
                         raise ValueError(f"Invalid number {first_number} found in {output_file}")
             print(f"Successfully checked {filename} for invalid numbers.")  # New print statement
+    print("Checking all files completed successfully")
 
 def update_coco_yml(coco_yml_path):
     """
