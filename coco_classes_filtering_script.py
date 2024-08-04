@@ -93,7 +93,6 @@ def on_choose_manually():
 
 # Call functions based on user choice
 user_choice = get_user_choice()
-print(f"user_choice (after call): {user_choice}")
 
 if user_choice == "yes":
     # Use default values
@@ -239,6 +238,11 @@ def main():
 
     train_input_folder = 'train2017'  # Adjust this path to your input folder
     train_output_folder = 'filter_train2017'
+    train_folder_exists = os.path.isdir(train_input_folder)
+
+    if not train_folder_exists:
+        print(f"Train input folder '{train_input_folder}' not found. Skipping train folder processing.\nexit")
+        return
 
     os.makedirs(train_output_folder, exist_ok=True)  # Create train output folder if it doesn't exist
     train_files_count = 0
@@ -265,6 +269,11 @@ def main():
 
     val_input_folder = "val2017"
     val_output_folder = "filter_val2017"
+    val_folder_exists = os.path.isdir(val_input_folder)
+
+    if not val_folder_exists:
+        print(f"Validation input folder '{val_input_folder}' not found. Skipping validation folder processing.\nexit")
+        return
 
     os.makedirs(val_output_folder, exist_ok=True)  # Create val output folder if it doesn't exist
 
