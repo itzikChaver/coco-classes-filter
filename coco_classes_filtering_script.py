@@ -13,6 +13,11 @@ base_classes = [
     'hair drier', 'toothbrush'
 ]
 
+# Default values
+default_filtered_classes = ['person', 'two-wheeler', 'car', 'bus', 'truck', 'bird', 'cat', 'dog', 'sheep']
+default_allowed_numbers = {0, 1, 2, 3, 7, 14, 15, 16, 18}
+default_replacements = {3: 1, 4: 3, 7: 4, 14: 5, 15: 6, 16: 7, 18: 8}
+
 def get_filtered_classes():
     selected_classes = []
     root = tk.Tk()
@@ -168,36 +173,67 @@ def main():
     Manages the overall workflow of filtering, copying, renaming, and error checking.
     """
 
-    input_folder = 'train2017'  # Adjust this path to your input folder
-    output_folder = 'filter_train2017'
+    # --- For train folder --- #
 
-    os.makedirs(output_folder, exist_ok=True)  # Create output folder if it doesn't exist
+    train_input_folder = 'train2017'  # Adjust this path to your input folder
+    train_output_folder = 'filter_train2017'
 
-    count = 0
+    os.makedirs(train_output_folder, exist_ok=True)  # Create train output folder if it doesn't exist
+    train_files_count = 0
 
-    for filename in os.listdir(input_folder):
+    for filename in os.listdir(train_input_folder):
         if filename.endswith('.txt'):
-            input_file = os.path.join(input_folder, filename)
-            output_file = os.path.join(output_folder, filename)
+            input_file = os.path.join(train_input_folder, filename)
+            output_file = os.path.join(train_output_folder, filename)
             
             process_file(input_file, output_file)
 
-            count += 1
+            train_files_count += 1
 
-    print(f"\nThe number of files scanned is: {count}\n")
+    print(f"\nThe number of train files scanned is: {train_files_count}\n")
+    os.rename(train_input_folder, 'original_train2017')  # Rename train input folder
+
+    # Check for invalid numbers after filtering
+    check_invalid_numbers(train_output_folder)
+
+    os.rename(train_output_folder, 'train2017')  # Rename train output folder
+
+
+    # --- For val folder --- #
+
+    val_input_folder = "val2017"
+    val_output_folder = "filter_val2017"
+
+    os.makedirs(val_output_folder, exist_ok=True)  # Create val output folder if it doesn't exist
+
+    val_files_count = 0
+
+    for filename in os.listdir(val_input_folder):
+        if filename.endswith('.txt'):
+            input_file = os.path.join(val_input_folder, filename)
+            output_file = os.path.join(val_output_folder, filename)
+            
+            process_file(input_file, output_file)
+
+            val_files_count += 1
+
+    print(f"\nThe number of val files scanned is: {val_files_count}\n")
+
+    os.rename(val_input_folder, 'original_val2017')  # Rename val input folder
+
+    # Check for invalid numbers after filtering
+    check_invalid_numbers(val_output_folder)
+
+    os.rename(val_output_folder, 'val2017')  # Rename val output folder
 
     # Update COCO YML file with filtered class information
     coco_yml_path = os.path.join('../..', 'coco.yaml')
     update_coco_yml(coco_yml_path)
 
-    os.rename(input_folder, 'original_train2017')  # Rename input folder
-
-    # Check for invalid numbers after filtering
-    check_invalid_numbers(output_folder)
-
-    os.rename(output_folder, 'train2017')  # Rename input folder
-
     print("script finished successfully")
+
+    example_training_command = "python3 train.py --workers 8 --device 0 --batch-size 4 --data data/coco.yaml --img 3840 3840 --cfg cfg/training/yolov7-tiny.yaml --weights '' --name yolov7-itzik --hyp data/hyp.scratch.tiny.yaml --epochs 1"
+    print(f"Example training command: {example_training_command}")
 
 if __name__ == "__main__":
     main()
