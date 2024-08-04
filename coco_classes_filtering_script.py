@@ -1,5 +1,6 @@
 import os
 import tkinter as tk
+from tkinter import messagebox
 
 base_classes = [
     'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light',
@@ -27,13 +28,10 @@ def get_filtered_classes():
     frame.pack(fill=tk.BOTH, expand=True)
 
     class_vars = []
-    rows = 10  # Number of rows in the grid
-    cols = 8   # Number of columns in the grid
-
     for idx, cls in enumerate(base_classes):
         var = tk.IntVar(value=0)
         chk = tk.Checkbutton(frame, text=cls, variable=var)
-        chk.grid(row=idx//cols, column=idx%cols, sticky='w')
+        chk.grid(row=idx//2, column=idx%2, sticky='w')
         class_vars.append(var)
 
     def on_submit():
@@ -47,10 +45,74 @@ def get_filtered_classes():
     root.mainloop()
     return selected_classes
 
-filtered_classes = get_filtered_classes()
-print("Filtered classes:", filtered_classes)
-allowed_numbers = {i for i, cls in enumerate(base_classes) if cls in filtered_classes}
-replacements = {i: idx for idx, i in enumerate(allowed_numbers)}
+def get_user_choice():
+    """
+    Presents a message box to ask the user about default values or manual selection.
+
+    Returns:
+        str: "yes" if user chooses default values, "no" otherwise.
+    """
+
+    user_choice = messagebox.askquestion(title="Choose Selection", message="Use default values or choose manually?")
+    return user_choice.lower()
+
+def on_choose_manually():
+    """
+    Creates a window with checkboxes for manual selection and updates variables.
+
+    Returns:
+        list, set, dict: Updated filtered_classes, allowed_numbers, and replacements.
+    """
+    root = tk.Tk()
+    root.title("Select Classes")
+
+    frame = tk.Frame(root)
+    frame.pack(fill=tk.BOTH, expand=True)
+
+    class_vars = []
+    for idx, cls in enumerate(base_classes):
+        var = tk.IntVar(value=0)
+        chk = tk.Checkbutton(frame, text=cls, variable=var)
+        chk.grid(row=idx // 2, column=idx % 2, sticky='w')
+        class_vars.append(var)
+
+    def on_submit():
+        """Retrieves user-selected classes and calculates derived values."""
+        selected_classes = [cls for cls, var in zip(base_classes, class_vars) if var.get() == 1]
+        new_allowed_numbers = {i for i, cls in enumerate(base_classes) if cls in selected_classes}
+        replacements = {i: idx for idx, i in enumerate(new_allowed_numbers)}
+
+        return selected_classes, new_allowed_numbers, replacements
+
+    btn_submit = tk.Button(root, text="Submit", command=on_submit)
+    btn_submit.pack(pady=10)
+
+    selected_classes, allowed_numbers, replacements = on_submit()
+    root.destroy()
+    return selected_classes, allowed_numbers, replacements
+
+# Call functions based on user choice
+user_choice = get_user_choice()
+print(f"user_choice (after call): {user_choice}")
+
+if user_choice == "yes":
+    # Use default values
+    print("Use default values")
+    # global filtered_classes, allowed_numbers, replacements
+    filtered_classes = default_filtered_classes.copy()
+    allowed_numbers = default_allowed_numbers.copy()
+    replacements = default_replacements.copy()
+else:
+    # Open window for manual selection
+    print("Open window for manual selection")
+    filtered_classes = get_filtered_classes()
+    allowed_numbers = {i for i, cls in enumerate(base_classes) if cls in filtered_classes}
+    replacements = {i: idx for idx, i in enumerate(allowed_numbers)}
+
+# Use the updated variables (if needed)
+print("Filtered Classes:", filtered_classes)
+print("Allowed Numbers:", allowed_numbers)
+print("Replacements:", replacements)
 
 def process_file(input_file, output_file):
     """
@@ -103,16 +165,16 @@ def check_invalid_numbers(output_folder):
     Raises:
         ValueError: If an invalid number is found in a file.
     """
+
     for filename in os.listdir(output_folder):
         if filename.endswith('.txt'):
             output_file = os.path.join(output_folder, filename)
             with open(output_file, 'r') as outfile:
                 for line in outfile:
                     first_number = int(line.split()[0])
-                    if first_number < 0 or first_number > len(filtered_classes):
+                    if first_number < 0 or first_number > 8:
                         raise ValueError(f"Invalid number {first_number} found in {output_file}")
             print(f"Successfully checked {filename} for invalid numbers.")  # New print statement
-    print(f"The filtering test was successfully completed, the number of classes found: {len(filtered_classes)}")
 
 def update_coco_yml(coco_yml_path):
     """
@@ -237,5 +299,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# python3 train.py --workers 8 --device 0 --batch-size 4 --data data/coco.yaml --img 3840 3840 --cfg cfg/training/yolov7-tiny.yaml --weights '' --name yolov7-itzik --hyp data/hyp.scratch.tiny.yaml --epochs 1
